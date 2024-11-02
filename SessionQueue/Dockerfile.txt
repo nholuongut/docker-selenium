@@ -1,0 +1,12 @@
+USER 1200
+
+#========================
+# nholuong SessionQueue Configuration
+#========================
+
+EXPOSE 5559
+
+COPY start-nholuong-grid-session-queue.sh \
+    /opt/bin/
+
+COPY nholuong-grid-session-queue.conf /etc/supervisor/conf.d/

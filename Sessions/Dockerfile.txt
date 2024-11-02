@@ -1,0 +1,12 @@
+USER 1200
+
+#========================
+# nholuong SessionMap Configuration
+#========================
+
+EXPOSE 5556
+
+COPY start-nholuong-grid-sessions.sh \
+    /opt/bin/
+
+COPY nholuong-grid-sessions.conf /etc/supervisor/conf.d/

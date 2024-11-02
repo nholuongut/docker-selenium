@@ -1,0 +1,123 @@
+# To execute this docker-compose yml file use `docker-compose -f docker-compose-v3-full-grid-dev.yml up`
+# Add the `-d` flag at the end for detached execution
+# To stop the execution, hit Ctrl+C, and then `docker-compose -f docker-compose-v3-full-grid-dev.yml down`
+version: "3"
+services:
+  nholuong-event-bus:
+    image: nholuong/event-bus:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - ./nholuong_server_deploy.jar:/opt/nholuong/nholuong-server.jar
+    container_name: nholuong-event-bus
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "5557:5557"
+
+  nholuong-sessions:
+    image: nholuong/sessions:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - ./nholuong_server_deploy.jar:/opt/nholuong/nholuong-server.jar
+    container_name: nholuong-sessions
+    ports:
+      - "5556:5556"
+    depends_on:
+      - nholuong-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=nholuong-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  nholuong-session-queue:
+    image: nholuong/session-queue:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - ./nholuong_server_deploy.jar:/opt/nholuong/nholuong-server.jar
+    container_name: nholuong-session-queue
+    ports:
+      - "5559:5559"
+    depends_on:
+      - nholuong-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=nholuong-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  nholuong-distributor:
+    image: nholuong/distributor:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - ./nholuong_server_deploy.jar:/opt/nholuong/nholuong-server.jar
+    container_name: nholuong-distributor
+    ports:
+      - "5553:5553"
+    depends_on:
+      - nholuong-event-bus
+      - nholuong-sessions
+      - nholuong-session-queue
+    environment:
+      - SE_EVENT_BUS_HOST=nholuong-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_SESSIONS_MAP_HOST=nholuong-sessions
+      - SE_SESSIONS_MAP_PORT=5556
+      - SE_SESSION_QUEUE_HOST=nholuong-session-queue
+      - SE_SESSION_QUEUE_PORT=5559
+
+  nholuong-router:
+    image: nholuong/router:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - ./nholuong_server_deploy.jar:/opt/nholuong/nholuong-server.jar
+    container_name: nholuong-router
+    ports:
+      - "4444:4444"
+    depends_on:
+      - nholuong-distributor
+      - nholuong-sessions
+      - nholuong-session-queue
+    environment:
+      - SE_DISTRIBUTOR_HOST=nholuong-distributor
+      - SE_DISTRIBUTOR_PORT=5553
+      - SE_SESSIONS_MAP_HOST=nholuong-sessions
+      - SE_SESSIONS_MAP_PORT=5556
+      - SE_SESSION_QUEUE_HOST=nholuong-session-queue
+      - SE_SESSION_QUEUE_PORT=5559
+
+  chrome:
+    image: nholuong/node-chrome:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - ./nholuong_server_deploy.jar:/opt/nholuong/nholuong-server.jar
+      - /dev/shm:/dev/shm
+    depends_on:
+      - nholuong-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=nholuong-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6900:5900"
+
+  edge:
+    image: nholuong/node-edge:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - ./nholuong_server_deploy.jar:/opt/nholuong/nholuong-server.jar
+      - /dev/shm:/dev/shm
+    depends_on:
+      - nholuong-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=nholuong-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6901:5900"
+
+  firefox:
+    image: nholuong/node-firefox:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - ./nholuong_server_deploy.jar:/opt/nholuong/nholuong-server.jar
+      - /dev/shm:/dev/shm
+    depends_on:
+      - nholuong-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=nholuong-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6902:5900"

@@ -1,0 +1,489 @@
+# To execute this yml file use this command in your local kubernetes environment `kubectl apply -f k8s-deployment-full-grid.yaml`
+#***************************************
+#nholuong EVENT BUS
+#***************************************
+apiVersion: v1
+kind: Service
+metadata:
+  name: nholuong-event-bus
+  labels:
+    name: nholuong-event-bus
+    component: "nholuong-grid-4"
+spec:
+  selector:
+    app: nholuong-event-bus
+  ports:
+    - name: port1
+      protocol: TCP
+      port: 4442
+      targetPort: 4442
+    - name: port2
+      protocol: TCP
+      port: 4443
+      targetPort: 4443
+    - name: port3
+      protocol: TCP
+      port: 5557
+      targetPort: 5557
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nholuong-event-bus-deployment
+  labels:
+    app: nholuong-event-bus
+    name: nholuong-event-bus
+    component: "nholuong-grid-4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nholuong-event-bus
+  template:
+    metadata:
+      labels:
+        app: nholuong-event-bus
+        name: nholuong-event-bus
+        component: "nholuong-grid-4"
+    spec:
+      containers:
+        - name: nholuong-event-bus
+          image: nholuong/event-bus:4.0.0-beta-4-prerelease-20210517
+          ports:
+            - containerPort: 4442
+              protocol: TCP
+            - containerPort: 4443
+              protocol: TCP
+            - containerPort: 5557
+              protocol: TCP
+---
+#***************************************
+#nholuong SESSIONS MAP
+#***************************************
+apiVersion: v1
+kind: Service
+metadata:
+  name: nholuong-sessions
+  labels:
+    name: nholuong-sessions
+    component: "nholuong-grid-4"
+spec:
+  selector:
+    app: nholuong-sessions
+  ports:
+    - name: port1
+      protocol: TCP
+      port: 5556
+      targetPort: 5556
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nholuong-sessions-deployment
+  labels:
+    app: nholuong-sessions
+    name: nholuong-sessions
+    component: "nholuong-grid-4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nholuong-sessions
+  template:
+    metadata:
+      labels:
+        app: nholuong-sessions
+        name: nholuong-sessions
+        component: "nholuong-grid-4"
+    spec:
+      containers:
+        - name: nholuong-sessions
+          image: nholuong/sessions:4.0.0-beta-4-prerelease-20210517
+          env:
+            - name: SE_EVENT_BUS_HOST
+              value: "nholuong-event-bus"
+            - name: SE_EVENT_BUS_PUBLISH_PORT
+              value: "4442"
+            - name: SE_EVENT_BUS_SUBSCRIBE_PORT
+              value: "4443"
+          ports:
+            - containerPort: 5556
+              protocol: TCP
+---
+#***************************************
+#nholuong SESSION QUEUE
+#***************************************
+apiVersion: v1
+kind: Service
+metadata:
+  name: nholuong-session-queue
+  labels:
+    name: nholuong-session-queue
+    component: "nholuong-grid-4"
+spec:
+  selector:
+    app: nholuong-session-queue
+  ports:
+    - name: port1
+      protocol: TCP
+      port: 5559
+      targetPort: 5559
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nholuong-session-queue-deployment
+  labels:
+    app: nholuong-session-queue
+    name: nholuong-session-queue
+    component: "nholuong-grid-4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nholuong-session-queue
+  template:
+    metadata:
+      labels:
+        app: nholuong-session-queue
+        name: nholuong-session-queue
+        component: "nholuong-grid-4"
+    spec:
+      containers:
+        - name: nholuong-session-queue
+          image: nholuong/session-queue:4.0.0-beta-4-prerelease-20210517
+          env:
+            - name: SE_EVENT_BUS_HOST
+              value: "nholuong-event-bus"
+            - name: SE_EVENT_BUS_PUBLISH_PORT
+              value: "4442"
+            - name: SE_EVENT_BUS_SUBSCRIBE_PORT
+              value: "4443"
+          ports:
+            - containerPort: 5556
+              protocol: TCP
+---
+#***************************************
+#nholuong DISTRIBUTOR
+#***************************************
+apiVersion: v1
+kind: Service
+metadata:
+  name: nholuong-distributor
+  labels:
+    name: nholuong-distributor
+    component: "nholuong-grid-4"
+spec:
+  selector:
+    app: nholuong-distributor
+  ports:
+    - name: port1
+      protocol: TCP
+      port: 5553
+      targetPort: 5553
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nholuong-distributor-deployment
+  labels:
+    app: nholuong-distributor
+    name: nholuong-distributor
+    component: "nholuong-grid-4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nholuong-distributor
+  template:
+    metadata:
+      labels:
+        app: nholuong-distributor
+        name: nholuong-distributor
+        component: "nholuong-grid-4"
+    spec:
+      containers:
+        - name: nholuong-distributor
+          image: nholuong/distributor:4.0.0-beta-4-prerelease-20210517
+          env:
+            - name: SE_EVENT_BUS_HOST
+              value: "nholuong-event-bus"
+            - name: SE_EVENT_BUS_PUBLISH_PORT
+              value: "4442"
+            - name: SE_EVENT_BUS_SUBSCRIBE_PORT
+              value: "4443"
+            - name: SE_SESSIONS_MAP_HOST
+              value: "nholuong-sessions"
+            - name: SE_SESSIONS_MAP_PORT
+              value: "5556"
+            - name: SE_SESSION_QUEUE_HOST
+              value: "nholuong-session-queue"
+            - name: SE_SESSION_QUEUE_PORT
+              value: "5559"
+          ports:
+            - containerPort: 5553
+              protocol: TCP
+---
+#***************************************
+#nholuong ROUTER
+#***************************************
+apiVersion: v1
+kind: Service
+metadata:
+  name: nholuong-router
+  labels:
+    name: nholuong-router
+    component: "nholuong-grid-4"
+spec:
+  selector:
+    app: nholuong-router
+  ports:
+    - name: web
+      protocol: TCP
+      port: 4444
+      targetPort: 4444
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nholuong-router-deployment
+  labels:
+    app: nholuong-router
+    name: nholuong-router
+    component: "nholuong-grid-4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nholuong-router
+  template:
+    metadata:
+      labels:
+        app: nholuong-router
+        name: nholuong-router
+        component: "nholuong-grid-4"
+    spec:
+      containers:
+        - name: nholuong-router
+          image: nholuong/router:4.0.0-beta-4-prerelease-20210517
+          env:
+            - name: SE_DISTRIBUTOR_HOST
+              value: "nholuong-distributor"
+            - name: SE_DISTRIBUTOR_PORT
+              value: "5553"
+            - name: SE_SESSIONS_MAP_HOST
+              value: "nholuong-sessions"
+            - name: SE_SESSIONS_MAP_PORT
+              value: "5556"
+            - name: SE_SESSION_QUEUE_HOST
+              value: "nholuong-session-queue"
+            - name: SE_SESSION_QUEUE_PORT
+              value: "5559"
+          ports:
+            - containerPort: 4444
+              protocol: TCP
+---
+#***************************************
+#nholuong CHROME NODE
+#***************************************
+apiVersion: v1
+kind: Service
+metadata:
+  name: nholuong-chrome-node
+  labels:
+    name: nholuong-chrome-node
+    component: "nholuong-grid-4"
+spec:
+  selector:
+    app: nholuong-chrome-node
+  ports:
+    - name: port1
+      protocol: TCP
+      port: 6900
+      targetPort: 5900
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nholuong-chrome-node-deployment
+  labels:
+    app: nholuong-chrome-node
+    name: nholuong-chrome-node
+    component: "nholuong-grid-4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nholuong-chrome-node
+  template:
+    metadata:
+      labels:
+        app: nholuong-chrome-node
+        name: nholuong-chrome-node
+        component: "nholuong-grid-4"
+    spec:
+      containers:
+        - name: nholuong-chrome-node
+          image: nholuong/node-chrome:4.0.0-beta-4-prerelease-20210517
+          env:
+            - name: SE_EVENT_BUS_HOST
+              value: "nholuong-event-bus"
+            - name: SE_EVENT_BUS_PUBLISH_PORT
+              value: "4442"
+            - name: SE_EVENT_BUS_SUBSCRIBE_PORT
+              value: "4443"
+          ports:
+            - containerPort: 5553
+              protocol: TCP
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+      volumes:
+        - name: dshm
+          emptyDir: { "medium": "Memory" }
+---
+#***************************************
+#nholuong EDGE NODE
+#***************************************
+apiVersion: v1
+kind: Service
+metadata:
+  name: nholuong-edge-node
+  labels:
+    name: nholuong-edge-node
+    component: "nholuong-grid-4"
+spec:
+  selector:
+    app: nholuong-edge-node
+  ports:
+    - name: port1
+      protocol: TCP
+      port: 6901
+      targetPort: 5900
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nholuong-edge-node-deployment
+  labels:
+    app: nholuong-edge-node
+    name: nholuong-edge-node
+    component: "nholuong-grid-4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nholuong-edge-node
+  template:
+    metadata:
+      labels:
+        app: nholuong-edge-node
+        name: nholuong-edge-node
+        component: "nholuong-grid-4"
+    spec:
+      containers:
+        - name: nholuong-edge-node
+          image: nholuong/node-edge:4.0.0-beta-4-prerelease-20210517
+          env:
+            - name: SE_EVENT_BUS_HOST
+              value: "nholuong-event-bus"
+            - name: SE_EVENT_BUS_PUBLISH_PORT
+              value: "4442"
+            - name: SE_EVENT_BUS_SUBSCRIBE_PORT
+              value: "4443"
+          ports:
+            - containerPort: 5553
+              protocol: TCP
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+      volumes:
+        - name: dshm
+          emptyDir: { "medium": "Memory" }
+---
+#***************************************
+#nholuong FIREFOX NODE
+#***************************************
+apiVersion: v1
+kind: Service
+metadata:
+  name: nholuong-ff-node
+  labels:
+    name: nholuong-ff-node
+    component: "nholuong-grid-4"
+spec:
+  selector:
+    app: nholuong-ff-node
+  ports:
+    - name: port1
+      protocol: TCP
+      port: 6902
+      targetPort: 5900
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nholuong-ff-node-deployment
+  labels:
+    app: nholuong-ff-node
+    name: nholuong-ff-node
+    component: "nholuong-grid-4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nholuong-ff-node
+  template:
+    metadata:
+      labels:
+        app: nholuong-ff-node
+        name: nholuong-ff-node
+        component: "nholuong-grid-4"
+    spec:
+      containers:
+        - name: nholuong-ff-node
+          image: nholuong/node-firefox:4.0.0-beta-4-prerelease-20210517
+          env:
+            - name: SE_EVENT_BUS_HOST
+              value: "nholuong-event-bus"
+            - name: SE_EVENT_BUS_PUBLISH_PORT
+              value: "4442"
+            - name: SE_EVENT_BUS_SUBSCRIBE_PORT
+              value: "4443"
+          ports:
+            - containerPort: 5553
+              protocol: TCP
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+      volumes:
+        - name: dshm
+          emptyDir: { "medium": "Memory" }

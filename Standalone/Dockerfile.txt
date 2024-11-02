@@ -1,0 +1,19 @@
+USER 1200
+
+#====================================
+# Scripts to run nholuong Standalone
+#====================================
+COPY start-nholuong-standalone.sh /opt/bin/start-nholuong-standalone.sh
+
+#==============================
+# Supervisor configuration file
+#==============================
+COPY nholuong.conf /etc/supervisor/conf.d/
+
+# Boolean value, maps "--relax-checks"
+ENV SE_RELAX_CHECKS true
+
+
+EXPOSE 4444
+
+

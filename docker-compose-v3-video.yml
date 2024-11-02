@@ -1,0 +1,81 @@
+# To execute this docker-compose yml file use `docker-compose -f docker-compose-v3-video.yml up`
+# Add the `-d` flag at the end for detached execution
+# To stop the execution, hit Ctrl+C, and then `docker-compose -f docker-compose-v3-video.yml down`
+version: "3"
+services:
+  chrome:
+    image: nholuong/node-chrome:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - nholuong-hub
+    environment:
+      - SE_EVENT_BUS_HOST=nholuong-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6900:5900"
+
+  edge:
+    image: nholuong/node-edge:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - nholuong-hub
+    environment:
+      - SE_EVENT_BUS_HOST=nholuong-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6901:5900"
+
+  firefox:
+    image: nholuong/node-firefox:4.0.0-beta-4-prerelease-20210517
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - nholuong-hub
+    environment:
+      - SE_EVENT_BUS_HOST=nholuong-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6902:5900"
+
+  chrome_video:
+    image: nholuong/video:ffmpeg-4.3.1-20210517
+    volumes:
+      - /tmp/videos:/videos
+    depends_on:
+      - chrome
+    environment:
+      - DISPLAY_CONTAINER_NAME=chrome
+      - FILE_NAME=chrome_video.mp4
+
+  edge_video:
+    image: nholuong/video:ffmpeg-4.3.1-20210517
+    volumes:
+      - /tmp/videos:/videos
+    depends_on:
+      - edge
+    environment:
+      - DISPLAY_CONTAINER_NAME=edge
+      - FILE_NAME=edge_video.mp4
+
+  firefox_video:
+    image: nholuong/video:ffmpeg-4.3.1-20210517
+    volumes:
+      - /tmp/videos:/videos
+    depends_on:
+      - firefox
+    environment:
+      - DISPLAY_CONTAINER_NAME=firefox
+      - FILE_NAME=firefox_video.mp4
+
+  nholuong-hub:
+    image: nholuong/hub:4.0.0-beta-4-prerelease-20210517
+    container_name: nholuong-hub
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"

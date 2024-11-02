@@ -1,0 +1,12 @@
+USER 1200
+
+#========================
+# nholuong Router Configuration
+#========================
+
+EXPOSE 4444
+
+COPY start-nholuong-grid-router.sh \
+    /opt/bin/
+
+COPY nholuong-grid-router.conf /etc/supervisor/conf.d/

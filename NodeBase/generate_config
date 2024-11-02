@@ -1,0 +1,39 @@
+#!/bin/bash
+
+echo "[events]
+publish = \"tcp://${SE_EVENT_BUS_HOST}:${SE_EVENT_BUS_PUBLISH_PORT}\"
+subscribe = \"tcp://${SE_EVENT_BUS_HOST}:${SE_EVENT_BUS_SUBSCRIBE_PORT}\"
+" > /opt/nholuong/config.toml
+
+if [[ -z "${SE_NODE_HOST}" ]] && [[ -z "${SE_NODE_PORT}" ]]; then
+  echo "Configuring server..."
+else
+  echo "[server]" >> /opt/nholuong/config.toml
+fi
+
+if [[ -z "${SE_NODE_HOST}" ]]; then
+  echo "Setting up SE_NODE_HOST..."
+else
+  echo "host = \"${SE_NODE_HOST}\"" >> /opt/nholuong/config.toml
+fi
+
+if [[ -z "${SE_NODE_PORT}" ]]; then
+  echo "Setting up SE_NODE_PORT..."
+else
+  echo "port = \"${SE_NODE_PORT}\"" >> /opt/nholuong/config.toml
+fi
+
+echo "[node]" >> /opt/nholuong/config.toml
+# String, Url where the Grid can be reached
+if [[ -z "${SE_NODE_GRID_URL}" ]]; then
+  echo "Setting up SE_NODE_GRID_URL..."
+else
+  echo "grid-url = \"${SE_NODE_GRID_URL}\"" >> /opt/nholuong/config.toml
+fi
+echo "session-timeout = \"${SE_NODE_SESSION_TIMEOUT}\"" >> /opt/nholuong/config.toml
+echo "override-max-sessions = ${SE_NODE_OVERRIDE_MAX_SESSIONS}" >> /opt/nholuong/config.toml
+echo "max-sessions = ${SE_NODE_MAX_SESSIONS}
+" >> /opt/nholuong/config.toml
+
+
+

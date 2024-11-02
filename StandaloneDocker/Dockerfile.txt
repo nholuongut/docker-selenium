@@ -1,0 +1,16 @@
+USER 1200
+
+#========================
+# nholuong Standalone Docker Configuration
+#========================
+
+EXPOSE 4444
+
+COPY start-nholuong-grid-standalone-docker.sh \
+    config.toml \
+    /opt/bin/
+
+COPY nholuong-grid-standalone-docker.conf /etc/supervisor/conf.d/
+
+# Boolean value, maps "--relax-checks"
+ENV SE_RELAX_CHECKS true
